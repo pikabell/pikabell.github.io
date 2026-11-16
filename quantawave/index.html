@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuantaWave: Learning to See from Binary Photons</title>
+<meta name="description" content="QuantaWave (WACV 2027): reconstructing RGB images from bursts of binary single-photon (SPAD) frames by keeping the final 128 binary frames as separate channels.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:type" content="website">
+<meta property="og:title" content="QuantaWave: Learning to See from Binary Photons">
+<meta property="og:description" content="Keeping the final 128 binary frames as separate channels instead of averaging them gains 9.65 dB at matched capacity. WACV 2027.">
+<meta property="og:image" content="https://pikabell.github.io/quantawave/static/teaser.jpg">
+<meta property="og:url" content="https://pikabell.github.io/quantawave/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f5d7c'/%3E%3Ccircle cx='10' cy='11' r='2.4' fill='%23fff'/%3E%3Ccircle cx='21' cy='9' r='2.4' fill='%23fff' opacity='.55'/%3E%3Ccircle cx='15' cy='19' r='2.4' fill='%23fff'/%3E%3Ccircle cx='23' cy='22' r='2.4' fill='%23fff' opacity='.55'/%3E%3Ccircle cx='9' cy='24' r='2.4' fill='%23fff' opacity='.55'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&amp;display=swap">
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1><span class="name">QuantaWave</span>: Learning to See from Binary Photons</h1>
+  <p class="venue">WACV 2027</p>
+  <p class="authors"><span>Sayak Dutta*</span> <span>Arjun Badola*</span> <span>Shanmuganathan Raman</span></p>
+  <p class="affil">Indian Institute of Technology Gandhinagar, India</p>
+  <p class="equal">* Equal contribution</p>
+
+  <ul class="links">
+    <li><span class="btn disabled" aria-disabled="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>Paper (coming soon)</span></li>
+    <li><a class="btn" href="https://github.com/pikabell/quantawave"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"/></svg>Code</a></li>
+    <li><a class="btn" href="https://github.com/pikabell/quantawave/releases/download/v1.0/quantawave_wacv2027.pth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Weights</a></li>
+    <li><a class="btn" href="#citation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7H4v6h4v-3M7 7c0 4-1 7-3 9M17 7h-3v6h4v-3M17 7c0 4-1 7-3 9"/></svg>BibTeX</a></li>
+  </ul>
+
+</header>
+
+<section id="teaser">
+  <figure>
+    <div class="card"><img src="static/teaser.jpg" width="1600" height="714" alt="Two example scenes: a binary burst frame, the photon-mean prior, the predicted residual, the QuantaWave reconstruction and the ground truth."></div>
+    <figcaption>Binary frame · photon-mean prior · predicted residual · QuantaWave · ground truth.</figcaption>
+  </figure>
+</section>
+
+<section id="abstract" class="abstract">
+  <h2>Abstract</h2>
+  <p>Single-photon avalanche diode (SPAD) cameras record a scene as a burst of sparse binary frames rather than as a single exposure, so reconstruction differs from conventional image denoising. For a static scene, the temporal mean of the burst is a sufficient statistic, and the burst can be collapsed without loss. Dynamic captures break this assumption: the Single-Photon Challenge evaluates the scene at the final frame of the burst, so averaging discards when each detection occurred. We therefore ask how much temporal resolution a reconstruction network should receive. We introduce QuantaWave, a hierarchical encoder–decoder that retains the final 128 binary RGB frames as separate input channels and predicts an RGB correction over their photon mean. Against a model matched for capacity and training budget that receives the same frames averaged, it gains 9.653 dB. Because the two inputs are equivalent under a stationary Bernoulli model, this gap measures the end-to-end cost of collapsing temporal resolution for a moving target rather than the information advantage of individual samples. No single architectural component we ablate accounts for more than 0.6 dB, and Haar wavelet resampling leaves accuracy unchanged while removing a tenth of the parameters. QuantaWave reaches 34.43 dB mean PSNR and ranks first by every PSNR statistic on the public benchmark, although it does not lead on LPIPS or mean MS-SSIM, and its margin narrows under sensor mismatch and severe photon starvation.</p>
+</section>
+
+<section id="method">
+  <h2>Method</h2>
+  <figure>
+    <div class="card"><img src="static/architecture.png" width="1600" height="628" alt="QuantaWave pipeline: binary frames form a 393-channel input to a U-Net trunk whose residual is added to the photon-mean anchor." loading="lazy"></div>
+  </figure>
+</section>
+
+<section id="results">
+  <h2>Results</h2>
+
+  <h3>Single-Photon Challenge leaderboard</h3>
+  <p class="note">Scores from the official evaluation server.</p>
+  <div class="table-scroll">
+  <table id="tab-leaderboard">
+    <thead>
+      <tr class="group"><th rowspan="2">Method</th><th colspan="3" class="sep">PSNR ↑</th><th colspan="3" class="sep">MS-SSIM ↑</th><th colspan="3" class="sep">LPIPS ↓</th></tr>
+      <tr><th class="sep">mean</th><th>5%-low</th><th>1%-low</th><th class="sep">mean</th><th>5%-low</th><th>1%-low</th><th class="sep">mean</th><th>5%-low</th><th>1%-low</th></tr>
+    </thead>
+    <tbody>
+      <tr class="ours"><td><b>QuantaWave (ours)</b></td><td class="sep"><b>34.434</b></td><td><b>26.525</b></td><td><b>23.910</b></td><td class="sep">0.971</td><td>0.933</td><td><b>0.911</b></td><td class="sep">0.096</td><td>0.230</td><td>0.275</td></tr>
+      <tr><td>Anonymous entry A</td><td class="sep">33.451</td><td>25.058</td><td>21.643</td><td class="sep"><b>0.972</b></td><td><b>0.938</b></td><td>0.901</td><td class="sep"><b>0.062</b></td><td><b>0.139</b></td><td><b>0.211</b></td></tr>
+      <tr><td>Anonymous entry B</td><td class="sep">33.059</td><td>25.877</td><td>22.348</td><td class="sep">0.966</td><td>0.927</td><td>0.906</td><td class="sep">0.108</td><td>0.232</td><td>0.285</td></tr>
+      <tr><td>Restormer</td><td class="sep">30.161</td><td>21.981</td><td>20.681</td><td class="sep">0.932</td><td>0.830</td><td>0.798</td><td class="sep">0.191</td><td>0.353</td><td>0.420</td></tr>
+      <tr><td>DiffBIR refinement</td><td class="sep">29.776</td><td>22.118</td><td>20.354</td><td class="sep">0.936</td><td>0.837</td><td>0.776</td><td class="sep">0.149</td><td>0.354</td><td>0.535</td></tr>
+      <tr><td>bit2bit + refinement</td><td class="sep">29.128</td><td>23.291</td><td>21.691</td><td class="sep">0.937</td><td>0.870</td><td>0.839</td><td class="sep">0.200</td><td>0.339</td><td>0.378</td></tr>
+      <tr><td>gQIR</td><td class="sep">19.529</td><td>14.157</td><td>12.834</td><td class="sep">0.863</td><td>0.724</td><td>0.679</td><td class="sep">0.237</td><td>0.370</td><td>0.404</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <figure class="narrow">
+    <div class="card"><img src="static/spc_comparison.jpg" width="1600" height="1956" alt="Four Single-Photon Challenge test scenes reconstructed by gQIR and QuantaWave, next to the ground truth." loading="lazy"></div>
+    <figcaption>Single-Photon Challenge test scenes.</figcaption>
+  </figure>
+</section>
+
+<section id="citation">
+  <h2>Citation</h2>
+  <div class="bib">
+    <button class="copy" type="button" id="copy-bib">Copy</button>
+<pre id="bibtex">@inproceedings{dutta2027quantawave,
+  title     = {QuantaWave: Learning to See from Binary Photons},
+  author    = {Dutta, Sayak and Badola, Arjun and Raman, Shanmuganathan},
+  booktitle = {Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)},
+  year      = {2027}
+}</pre>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>Acknowledgements: The authors acknowledge the support of the Dr. Vilas Mujumdar Chair Professorship at IIT Gandhinagar.</p>
+    <p class="small">Code and weights are released under <a href="https://github.com/pikabell/quantawave/blob/main/LICENSE">CC BY-NC 4.0</a>.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var b = document.getElementById('copy-bib');
+  b.addEventListener('click', function () {
+    var t = document.getElementById('bibtex').textContent;
+    var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1600); };
+    if (navigator.clipboard) { navigator.clipboard.writeText(t).then(done, function () { b.textContent = 'Select & copy'; }); }
+    else { b.textContent = 'Select & copy'; }
+  });
+})();
+</script>
+</body>
+</html>
